@@ -20,6 +20,8 @@
 		52237250202B117700068EE4 /* CustomTestSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5223724F202B117700068EE4 /* CustomTestSet.swift */; };
 		5223729B202B275F00068EE4 /* Firmwares in Resources */ = {isa = PBXBuildFile; fileRef = 5223729A202B275F00068EE4 /* Firmwares */; };
 		5223729D2036DDFC00068EE4 /* nRF52840TestSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5223729C2036DDFC00068EE4 /* nRF52840TestSet.swift */; };
+		5288C1DE236AE4E200321ED3 /* UIColor+Nordic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5288C1DD236AE4E200321ED3 /* UIColor+Nordic.swift */; };
+		5288C1E2236C3C7400321ED3 /* README_OBJC.md in Resources */ = {isa = PBXBuildFile; fileRef = 5288C1E1236C3C7400321ED3 /* README_OBJC.md */; };
 		52A9C167230D633A0036792A /* changelog.md in Resources */ = {isa = PBXBuildFile; fileRef = 52A9C166230D633A0036792A /* changelog.md */; };
 		52A9C169230D63410036792A /* documentation.md in Resources */ = {isa = PBXBuildFile; fileRef = 52A9C168230D63410036792A /* documentation.md */; };
 		52F6AD6222B2429300F0D7DF /* TestFirmwares in Resources */ = {isa = PBXBuildFile; fileRef = 52F6AD6122B2429300F0D7DF /* TestFirmwares */; };
@@ -64,6 +66,8 @@
 		5223724F202B117700068EE4 /* CustomTestSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomTestSet.swift; sourceTree = "<group>"; };
 		5223729A202B275F00068EE4 /* Firmwares */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Firmwares; sourceTree = "<group>"; };
 		5223729C2036DDFC00068EE4 /* nRF52840TestSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = nRF52840TestSet.swift; sourceTree = "<group>"; };
+		5288C1DD236AE4E200321ED3 /* UIColor+Nordic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Nordic.swift"; sourceTree = "<group>"; };
+		5288C1E1236C3C7400321ED3 /* README_OBJC.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README_OBJC.md; path = ../README_OBJC.md; sourceTree = "<group>"; };
 		52A9C166230D633A0036792A /* changelog.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = changelog.md; path = ../changelog.md; sourceTree = "<group>"; };
 		52A9C168230D63410036792A /* documentation.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = documentation.md; path = ../documentation.md; sourceTree = "<group>"; };
 		52F6AD6122B2429300F0D7DF /* TestFirmwares */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TestFirmwares; sourceTree = "<group>"; };
@@ -165,6 +169,14 @@
 			path = "DFU Test Performer";
 			sourceTree = "<group>";
 		};
+		5288C1DC236AE4B100321ED3 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				5288C1DD236AE4E200321ED3 /* UIColor+Nordic.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
 		607FACC71AFB9204008FA782 = {
 			isa = PBXGroup;
 			children = (
@@ -194,6 +206,7 @@
 				607FACD51AFB9204008FA782 /* AppDelegate.swift */,
 				522372422029CCAB00068EE4 /* DFU Test Performer */,
 				522372402029CC5900068EE4 /* View Controllers */,
+				5288C1DC236AE4B100321ED3 /* Utils */,
 				5223729A202B275F00068EE4 /* Firmwares */,
 				522372412029CC6C00068EE4 /* UI */,
 				607FACD31AFB9204008FA782 /* Supporting Files */,
@@ -233,6 +246,7 @@
 			children = (
 				3B0557890E61EFF388A8734B /* iOSDFULibrary.podspec */,
 				8EE39CA79039E8FFBDA0C9D3 /* README.md */,
+				5288C1E1236C3C7400321ED3 /* README_OBJC.md */,
 				52A9C166230D633A0036792A /* changelog.md */,
 				52A9C168230D63410036792A /* documentation.md */,
 				DAEFE092DC94AFC6C8316559 /* LICENSE */,
@@ -361,10 +375,9 @@
 			};
 			buildConfigurationList = 607FACCB1AFB9204008FA782 /* Build configuration list for PBXProject "iOSDFULibrary" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
 				Base,
 			);
@@ -394,6 +407,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5288C1E2236C3C7400321ED3 /* README_OBJC.md in Resources */,
 				52F6AD6222B2429300F0D7DF /* TestFirmwares in Resources */,
 				52A9C169230D63410036792A /* documentation.md in Resources */,
 				607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */,
@@ -546,6 +560,7 @@
 			files = (
 				607FACD81AFB9204008FA782 /* ScannerViewController.swift in Sources */,
 				52FB0B022220168D00B1E575 /* PeripheralCell.swift in Sources */,
+				5288C1DE236AE4E200321ED3 /* UIColor+Nordic.swift in Sources */,
 				5223723F2029C40F00068EE4 /* DFUViewController.swift in Sources */,
 				5223724C2029D3FC00068EE4 /* nRF52832TestSet.swift in Sources */,
 				5223724E202B0B0C00068EE4 /* DFUFirmwareProvider.swift in Sources */,
@@ -706,7 +721,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -758,7 +773,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
