@@ -1,4 +1,22 @@
 ### Changelog
+- **4.11.1**
+   - Improvement: Xcode 13 issue fixed (#455).
+   
+- **4.11.0**
+   - Feature: Support for Abort op code added in Secure DFU (#447). 
+   - Improvement: More op codes added in Secure DFU in SDK 15 (#447).
+   - Improvement: Use connection timeout when reconnecting in DFU mode (#442).
+   - Bugfix: Handling missing error codes (#446).
+   - Bugfix: Handling invalid max object size (#443, #444).
+   - Other improvements (#445, #448).
+   - Read Object Info renamed to Select Object, like in DFU specification.
+   
+- **4.10.4**
+   - Fix for compilation error in Xcode 13 related to change in iOS API (#433, #439).
+   - Improvement: State validation (#434, #435, #437).
+   - Imporvement: Unnecessary fields removed from `SecureDFUExecutor` (#438).
+   - Improvement: Accepting garbage after valid data in notifications (#440, #436).
+   
 - **4.10.3**
    - Project compilation available for Arm Simulators (#423).
    

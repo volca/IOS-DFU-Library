@@ -47,6 +47,16 @@ import CoreBluetooth
     private let service                       : CBService
     private var dfuPacketCharacteristic       : SecureDFUPacket?
     private var dfuControlPointCharacteristic : SecureDFUControlPoint?
+    
+    /// This method returns true if DFU Control Point characteristc has been discovered.
+    /// A device without this characteristic is not supported and can only be disconnected.
+    internal func supportsReset() -> Bool {
+        // The Abort (0x0C) command has been added to DFU bootloader in SDK 15.
+        // https://infocenter.nordicsemi.com/topic/com.nordic.infocenter.sdk5.v15.0.0/lib_dfu_transport.html?cp=8_5_3_3_5_2
+        // For earlier SDKs there is no way to reset the bootloader other than
+        // disconnecting and waiting for it to time out after few minutes.
+        return dfuControlPointCharacteristic != nil
+    }
 
     private var paused  = false
     private var aborted = false
@@ -55,7 +65,7 @@ import CoreBluetooth
     private var success          : Callback?
     /// A temporary callback used to report an operation error.
     private var report           : ErrorCallback?
-    /// A temporaty callback used to report progress status.
+    /// A temporary callback used to report progress status.
     private var progressDelegate : DFUProgressDelegate?
     private var progressQueue    : DispatchQueue?
     
@@ -107,7 +117,8 @@ import CoreBluetooth
         dfuPacketCharacteristic.sendNext(packetReceiptNotificationNumber ?? 0,
                                          packetsFrom: range, of: firmware,
                                          andReportProgressTo: progressDelegate, on: progressQueue,
-                                         andCompletionTo: success)
+                                         andCompletionTo: success,
+                                         onError: report)
         return paused
     }
     
@@ -140,12 +151,15 @@ import CoreBluetooth
     */
     func discoverCharacteristics(onSuccess success: @escaping Callback,
                                  onError report: @escaping ErrorCallback) {
+        let optPeripheral: CBPeripheral? = service.peripheral
+        guard let peripheral = optPeripheral else {
+            report(.invalidInternalState, "Assert service.peripheral != nil failed")
+            return
+        }
+        
         // Save callbacks
         self.success = success
         self.report  = report
-        
-        // Get the peripheral object
-        let peripheral = service.peripheral
         
         // Set the peripheral delegate to self
         peripheral.delegate = self
@@ -180,15 +194,15 @@ import CoreBluetooth
     }
     
     /**
-     Reads Command Object Info. Result it reported using callbacks.
+     Selects the Command Object. Result it reported using callbacks.
      
      - parameter response: Method called when the response was received.
      - parameter report:   Method called when an error occurred.
      */
-    func readCommandObjectInfo(onReponse response: @escaping SecureDFUResponseCallback,
-                               onError report: @escaping ErrorCallback) {
+    func selectCommandObject(onReponse response: @escaping SecureDFUResponseCallback,
+                             onError report: @escaping ErrorCallback) {
         if !aborted {
-            dfuControlPointCharacteristic?.send(.readCommandObjectInfo,
+            dfuControlPointCharacteristic?.send(.selectCommandObject,
                                                 onResponse: response, onError: report)
         } else {
             sendReset(onError: report)
@@ -196,15 +210,15 @@ import CoreBluetooth
     }
     
     /**
-     Reads object info Data. Result it reported using callbacks.
+     Selects the Data Object. Result it reported using callbacks.
      
      - parameter response: Method called when the response was received.
      - parameter report:   Method called when an error occurred.
      */
-    func readDataObjectInfo(onReponse response: @escaping SecureDFUResponseCallback,
-                            onError report: @escaping ErrorCallback) {
+    func selectDataObject(onReponse response: @escaping SecureDFUResponseCallback,
+                          onError report: @escaping ErrorCallback) {
         if !aborted {
-            dfuControlPointCharacteristic?.send(.readDataObjectInfo,
+            dfuControlPointCharacteristic?.send(.selectDataObject,
                                                 onResponse: response, onError: report)
         } else {
             sendReset(onError: report)
@@ -315,10 +329,19 @@ import CoreBluetooth
      
      - parameter report: A callback called when writing characteristic failed.
      */
-    private func sendReset(onError report: @escaping ErrorCallback) {
+    func sendReset(onError report: @escaping ErrorCallback) {
         aborted = true
-        // There is no command to reset a Secure DFU device. We can just disconnect.
-        targetPeripheral?.disconnect()
+        // Upon sending the Abort request the device will immediately reboot in application
+        // mode. There will be no notification with status success returned.
+        dfuControlPointCharacteristic?.send(.abort,
+            onSuccess: nil, // Device will disconnected immediately.
+            onError: { [weak self] _, _ in
+                // Seems like the Abort request is not supported (indicating SDK 12-14).
+                // We can just disconnect. The bootloader should reset to app mode after
+                // a timeout.
+                self?.targetPeripheral?.disconnect()
+            }
+        )
     }
     
     //MARK: - Packet commands
@@ -329,9 +352,11 @@ import CoreBluetooth
      overflow error may occur.
      
      - parameter packetData: Data to be sent as Init Packet.
+     - parameter report:     Method called when an error occurred.
      */
-    func sendInitPacket(withdata packetData: Data){
-        dfuPacketCharacteristic?.sendInitPacket(packetData)
+    func sendInitPacket(withData packetData: Data,
+                        onError report: @escaping ErrorCallback) {
+        dfuPacketCharacteristic?.sendInitPacket(packetData, onError: report)
     }
 
     /**
@@ -404,7 +429,7 @@ import CoreBluetooth
                         dfuPacketCharacteristic.sendNext(self.packetReceiptNotificationNumber ?? 0,
                                                          packetsFrom: range, of: firmware,
                                                          andReportProgressTo: progressDelegate, on: queue,
-                                                         andCompletionTo: _success)
+                                                         andCompletionTo: _success, onError: _report)
                     } else {
                         // Target device deported invalid number of bytes received
                         report(.bytesLost, "\(bytesSent) bytes were sent while \(bytesReceived!) bytes were reported as received")
@@ -431,7 +456,7 @@ import CoreBluetooth
             dfuPacketCharacteristic?.sendNext(packetReceiptNotificationNumber ?? 0,
                                               packetsFrom: range, of: firmware,
                                               andReportProgressTo: progressDelegate, on: queue,
-                                              andCompletionTo: _success)
+                                              andCompletionTo: _success, onError: _report)
         } else if aborted {
             self.firmware = nil
             self.range    = nil

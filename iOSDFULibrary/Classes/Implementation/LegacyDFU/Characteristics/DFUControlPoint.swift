@@ -120,6 +120,17 @@ internal enum DFUResultCode : UInt8 {
     case crcError             = 5
     case operationFailed      = 6
     
+    // Note: When more result codes are added, the corresponding DFUError
+    //       case needs to be added. See `error` property below.
+    
+    var code: UInt8 {
+        return rawValue
+    }
+    
+    var error: DFUError {
+        return DFURemoteError.legacy.with(code: code)
+    }
+    
     var description: String {
         switch self {
         case .success:              return "Success"
@@ -130,10 +141,6 @@ internal enum DFUResultCode : UInt8 {
         case .operationFailed:      return "Operation failed"
         }
     }
-    
-    var code: UInt8 {
-        return rawValue
-    }
 }
 
 internal struct Response {
@@ -142,7 +149,7 @@ internal struct Response {
     let status        : DFUResultCode
     
     init?(_ data: Data) {
-        guard data.count == 3,
+        guard data.count >= 3,
               let opCode = DFUOpCode(rawValue: data[0]),
               let requestOpCode = DFUOpCode(rawValue: data[1]),
               let status = DFUResultCode(rawValue: data[2]),
@@ -165,7 +172,7 @@ internal struct PacketReceiptNotification {
     let bytesReceived : UInt32
     
     init?(_ data: Data) {
-        guard data.count == 5,
+        guard data.count >= 5,
               let opCode = DFUOpCode(rawValue: data[0]),
               opCode == .packetReceiptNotification else {
             return nil
@@ -178,7 +185,7 @@ internal struct PacketReceiptNotification {
         // instad of 32-bit. However, the packet is still 5 bytes long and the two last
         // bytes are 0x00-00. This has to be taken under consideration when comparing
         // number of bytes sent and received as the latter counter may rewind if fw size
-        // is > 0xFFFF bytes (LegacyDFUService:L446).
+        // is > 0xFFFF bytes (LegacyDFUService:L543).
         self.bytesReceived = data.asValue(offset: 1)
     }
 }
@@ -216,12 +223,16 @@ internal struct PacketReceiptNotification {
      - parameter report:  Method called in case of an error.
      */
     func enableNotifications(onSuccess success: Callback?, onError report: ErrorCallback?) {
+        // Get the peripheral object.
+        let optService: CBService? = characteristic.service
+        guard let peripheral = optService?.peripheral else {
+            report?(.invalidInternalState, "Assert characteristic.service?.peripheral != nil failed")
+            return
+        }
+        
         // Save callbacks.
         self.success = success
         self.report  = report
-        
-        // Get the peripheral object.
-        let peripheral = characteristic.service.peripheral
         
         // Set the peripheral delegate to self.
         peripheral.delegate = self
@@ -240,14 +251,18 @@ internal struct PacketReceiptNotification {
      - parameter report:  Method called in case of an error.
      */
     func send(_ request: Request, onSuccess success: Callback?, onError report: ErrorCallback?) {
+        // Get the peripheral object.
+        let optService: CBService? = characteristic.service
+        guard let peripheral = optService?.peripheral else {
+            report?(.invalidInternalState, "Assert characteristic.service?.peripheral != nil failed")
+            return
+        }
+        
         // Save callbacks and parameter.
         self.success   = success
         self.report    = report
         self.request   = request
         self.resetSent = false
-        
-        // Get the peripheral object.
-        let peripheral = characteristic.service.peripheral
         
         // Set the peripheral delegate to self.
         peripheral.delegate = self
@@ -287,15 +302,19 @@ internal struct PacketReceiptNotification {
     func waitUntilUploadComplete(onSuccess success: Callback?,
                                  onPacketReceiptNofitication proceed: ProgressCallback?,
                                  onError report: ErrorCallback?) {
+        // Get the peripheral object.
+        let optService: CBService? = characteristic.service
+        guard let peripheral = optService?.peripheral else {
+            report?(.invalidInternalState, "Assert characteristic.service?.peripheral != nil failed")
+            return
+        }
+        
         // Save callbacks. The proceed callback will be called periodically whenever
         // a packet receipt notification is received. It resumes uploading.
         self.success = success
         self.proceed = proceed
         self.report  = report
         self.uploadStartTime = CFAbsoluteTimeGetCurrent()
-        
-        // Get the peripheral object.
-        let peripheral = characteristic.service.peripheral
         
         // Set the peripheral delegate to self.
         peripheral.delegate = self
@@ -434,7 +453,7 @@ internal struct PacketReceiptNotification {
                 success?()
             } else {
                 logger.e("Error \(response.status.code): \(response.status.description)")
-                report?(DFUError(rawValue: Int(response.status.rawValue))!, response.status.description)
+                report?(response.status.error, response.status.description)
             }
         } else {
             logger.e("Unknown response received: 0x\(characteristicValue.hexString)")
